@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
+	//"os"
 )
 
 type Comic struct {
@@ -19,10 +19,19 @@ type Comic struct {
 
 type DiscWebhook struct {
     Content string `json:"content"`
-    Embeds  []M    `json:"embeds"`
+    Embeds []Embed  `json:"embeds"`
 }
 
-type M map[string]interface{}
+type Embed struct {
+
+    Title string `json:"title"`
+    Image Image `json:"image"`
+}
+
+type Image struct {
+    URL string `json:"url"`
+}
+
 
 func main() {
 
@@ -53,50 +62,45 @@ func main() {
 func post_comic(comic Comic) {
     
 	fmt.Println(comic)
-    embeds := create_embed(comic)
-   // embeds = array of map[string]string but also sometimes contains map[string]map[string]string 
+    
+    image := Image{
+        URL: comic.Img,
+    
+    }
+
+
+    // Create a slice embed because discord requires an array of embed objects
+    embed := []Embed{
+        {
+        Title: comic.Title,
+        Image: image,
+    },
+}
+
+    // embeds = array of map[string]string but also sometimes contains map[string]map[string]string 
     
    discordData := DiscWebhook{
         Content: "Daily XKCD", 
-        Embeds: embeds,
+        Embeds: embed,
     }
     //var discordValues map[string]interface{}
 
     fmt.Println(discordData)
 
-    enc := json.NewEncoder(os.Stdout)
+    //enc := json.NewEncoder(os.Stdout)
 
-    enc.Encode(discordData)
+    //enc.Encode(discordData)
     jsonData, err := json.MarshalIndent(discordData, "", "    ")
     if err != nil {
         panic(err)
     }
+
     fmt.Println(string(jsonData))
-    resp, err := http.Post("",
-        "application/json",
+    resp, err := http.Post("webhook_here",
         bytes.NewBuffer(jsonData))
     if err != nil {
         panic(err)
     }
     fmt.Println("Response status:", resp.Status)
-
-}
-
-func create_embed(comic Comic) []M {
-
-   
-    var mapSlice []M
-
-    imageUrl := map[string]string{"url": comic.Img}
-    image := M{"title": comic.Title, "image": imageUrl}
-    //fmt.Println(image)
-   
-    mapSlice = append(mapSlice, image)
-    testJson, _ := json.MarshalIndent(mapSlice, "","    ")
-
-    fmt.Println(string(testJson))
-
-    return(mapSlice)
-
 
 }
